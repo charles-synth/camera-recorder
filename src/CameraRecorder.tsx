@@ -24,8 +24,8 @@ const CameraRecorder: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [intervalTime, setIntervalTime] = useState(5000);
-  const [traningStorageAccountUrl, setTraningStorageAccountUrl] = useState("");
-  const [traningContainerName, setTraningContainerName] = useState("");
+  const [trainingStorageAccountUrl, setTraningStorageAccountUrl] = useState("");
+  const [trainingContainerName, setTraningContainerName] = useState("");
   const [trainingSasToken, setTraningSasToken] = useState("");
 
   const [inferenceStorageAccountUrl, setInferenceStorageAccountUrl] = useState("");
@@ -65,8 +65,8 @@ const CameraRecorder: React.FC = () => {
     }
   };
 
-  const captureAndUploadImage = async () => {
-    if (!canvasRef.current || !videoRef.current || !traningStorageAccountUrl) return;
+  const captureAndUploadImage = async (accountUrl: string, containerName: string, sasToken: string) => {
+    if (!canvasRef.current || !videoRef.current || !trainingStorageAccountUrl) return;
 
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -84,15 +84,13 @@ const CameraRecorder: React.FC = () => {
         const formData = new FormData();
         formData.append("file", file);
 
-        const uploadUrl = `${traningStorageAccountUrl}/${fileName}${trainingSasToken}`;
+        const uploadUrl = `${accountUrl}${containerName}/${fileName}${sasToken}`;
 
         try {
           await axios.put(uploadUrl.replace('{filename}', fileName), blob, {
             headers: {
-            //   "x-ms-blob-type": "BlockBlob",
-            //   "Content-Type": "image/png",
                 "x-ms-blob-type": "BlockBlob",
-                "x-ms-version": "2021-08-06",  // Explicit Azure API version
+                "x-ms-version": "2021-08-06",           // Explicit Azure API version
                 "Content-Type": "image/png",
                 "x-ms-date": new Date().toUTCString(), // Ensures timestamp is included
             },
@@ -105,13 +103,22 @@ const CameraRecorder: React.FC = () => {
     }
   };
 
-  const startRecording = () => {
-    if (!traningStorageAccountUrl || !traningContainerName || !trainingSasToken) {
-      alert("Please enter a valid Azure Container URL");
+  const startRecordingTrainingImages = () => {
+    if (!trainingStorageAccountUrl || !trainingContainerName || !trainingSasToken) {
+      alert("Please enter valid Training Azure Container Credentials");
       return;
     }
     setIsRecording(true);
-    intervalRef.current = setInterval(captureAndUploadImage, intervalTime);
+    intervalRef.current = setInterval(() => captureAndUploadImage(trainingStorageAccountUrl, trainingContainerName, trainingSasToken), intervalTime);
+  };
+
+  const startRecordingInferenceImages = () => {
+    if (!inferenceStorageAccountUrl || !inferenceContainerName || !inferenceSasToken) {
+      alert("Please enter valid Inference Azure Container Credentials");
+      return;
+    }
+    setIsRecording(true);
+    intervalRef.current = setInterval(() => captureAndUploadImage(inferenceStorageAccountUrl, inferenceContainerName, inferenceSasToken), intervalTime);
   };
 
   const stopRecording = () => {
@@ -174,32 +181,32 @@ const CameraRecorder: React.FC = () => {
             </Grid>
             <Grid size={6}>
                 <Item>
-                <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Azure Storage Account URL"
-                    variant="outlined"
-                    value={traningStorageAccountUrl}
-                    onChange={(e) => setTraningStorageAccountUrl(e.target.value)}
-                />
-                <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Container Name"
-                    variant="outlined"
-                    value={traningContainerName}
-                    onChange={(e) => setTraningContainerName(e.target.value)}
-                />
+                    <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Azure Storage Account URL"
+                        variant="outlined"
+                        value={trainingStorageAccountUrl}
+                        onChange={(e) => setTraningStorageAccountUrl(e.target.value)}
+                    />
+                    <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Container Name"
+                        variant="outlined"
+                        value={trainingContainerName}
+                        onChange={(e) => setTraningContainerName(e.target.value)}
+                    />
 
-                <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Sas Token"
-                    variant="outlined"
-                    value={trainingSasToken}
-                    onChange={(e) => setTraningSasToken(e.target.value)}
-                />
-                    <Button variant="contained" color="primary" onClick={startRecording} disabled={isRecording}>
+                    <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Sas Token"
+                        variant="outlined"
+                        value={trainingSasToken}
+                        onChange={(e) => setTraningSasToken(e.target.value)}
+                    />
+                    <Button variant="contained" color="primary" onClick={startRecordingTrainingImages} disabled={isRecording}>
                         Record
                     </Button>
                     <Button variant="contained" color="secondary" onClick={stopRecording} disabled={!isRecording}>
@@ -208,7 +215,39 @@ const CameraRecorder: React.FC = () => {
                 </Item>
             </Grid>
             <Grid size={6}>
-                <Item>Inference Images</Item>
+                <Item>
+                    <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Azure Storage Account URL"
+                        variant="outlined"
+                        value={inferenceStorageAccountUrl}
+                        onChange={(e) => setInferenceStorageAccountUrl(e.target.value)}
+                    />
+                    <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Container Name"
+                        variant="outlined"
+                        value={inferenceContainerName}
+                        onChange={(e) => setInferenceContainerName(e.target.value)}
+                    />
+
+                    <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Sas Token"
+                        variant="outlined"
+                        value={inferenceSasToken}
+                        onChange={(e) => setInferenceSasToken(e.target.value)}
+                    />
+                    <Button variant="contained" color="primary" onClick={startRecordingInferenceImages} disabled={isRecording}>
+                        Record
+                    </Button>
+                    <Button variant="contained" color="secondary" onClick={stopRecording} disabled={!isRecording}>
+                        Stop
+                    </Button>
+                </Item>
             </Grid>
         </Grid>
 
