@@ -66,6 +66,7 @@ const CameraRecorder: React.FC = () => {
   };
 
   const captureAndUploadImage = async (accountUrl: string, containerName: string, sasToken: string) => {
+    toast.info(`captureAndUploadImage`);
     if (!canvasRef.current || !videoRef.current || !trainingStorageAccountUrl) return;
 
     const canvas = canvasRef.current;
@@ -169,9 +170,10 @@ const CameraRecorder: React.FC = () => {
                 <Button variant="contained" color="warning" onClick={toggleCamera}>
                     {isCameraOn ? "Stop Camera" : "Start Camera"}
                 </Button>
-                <Button variant="contained" color="info" onClick={switchCamera}>
+                <Button variant="contained" color="info" onClick={switchCamera} sx={{ml: '1em'}}>
                     Switch Camera
                 </Button>
+                {facingMode}
             </Grid>
             <Grid size={6}>
                 <Item>Training Images</Item>
@@ -251,10 +253,16 @@ const CameraRecorder: React.FC = () => {
             </Grid>
         </Grid>
 
-      <Button variant="contained" color="success" onClick={playSound}>
+      <Button variant="contained" color="success" onClick={() => {
+        toast.info(`playSound`);
+        playSound()
+      }}>
         Play Sound
       </Button>
-      <Button variant="contained" color="success" onClick={playSound2}>
+      <Button variant="contained" color="success" onClick={() => {
+        toast.info(`playSound2`);
+        playSound2()
+      }}>
         Play Sound
       </Button>
     </Container>
