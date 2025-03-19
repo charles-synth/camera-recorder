@@ -171,9 +171,21 @@ const CameraRecorder: React.FC = () => {
                     {isCameraOn ? "Stop Camera" : "Start Camera"}
                 </Button>
                 <Button variant="contained" color="info" onClick={switchCamera} sx={{ml: '1em'}}>
-                    Switch Camera
+                    Switch Camera ({facingMode})
                 </Button>
-                {facingMode}
+                
+                <Button variant="contained" color="success" onClick={() => {
+                  toast.info(`playSound`);
+                  playSound()
+                }} sx={{ml: '1em'}}>
+                  Play Sound 1
+                </Button>
+                <Button variant="contained" color="success" onClick={() => {
+                  toast.info(`playSound2`);
+                  playSound2()
+                }} sx={{ml: '1em'}}>
+                  Play Sound 2
+                </Button>
             </Grid>
             <Grid size={6}>
                 <Item>Training Images</Item>
@@ -208,7 +220,7 @@ const CameraRecorder: React.FC = () => {
                         value={trainingSasToken}
                         onChange={(e) => setTraningSasToken(e.target.value)}
                     />
-                    <Button variant="contained" color="primary" onClick={startRecordingTrainingImages} disabled={isRecording}>
+                    <Button variant="contained" color="primary" onClick={startRecordingTrainingImages} disabled={isRecording} sx={{mr: '1em'}}>
                         Record
                     </Button>
                     <Button variant="contained" color="secondary" onClick={stopRecording} disabled={!isRecording}>
@@ -243,7 +255,7 @@ const CameraRecorder: React.FC = () => {
                         value={inferenceSasToken}
                         onChange={(e) => setInferenceSasToken(e.target.value)}
                     />
-                    <Button variant="contained" color="primary" onClick={startRecordingInferenceImages} disabled={isRecording}>
+                    <Button variant="contained" color="primary" onClick={startRecordingInferenceImages} disabled={isRecording} sx={{mr: '1em'}}>
                         Record
                     </Button>
                     <Button variant="contained" color="secondary" onClick={stopRecording} disabled={!isRecording}>
@@ -253,18 +265,6 @@ const CameraRecorder: React.FC = () => {
             </Grid>
         </Grid>
 
-      <Button variant="contained" color="success" onClick={() => {
-        toast.info(`playSound`);
-        playSound()
-      }}>
-        Play Sound
-      </Button>
-      <Button variant="contained" color="success" onClick={() => {
-        toast.info(`playSound2`);
-        playSound2()
-      }}>
-        Play Sound
-      </Button>
     </Container>
   );
 };
