@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Button, TextField, MenuItem, Select, FormControl, InputLabel, Container } from "@mui/material";
+import { Button, TextField, MenuItem, Select, FormControl, InputLabel, Container, Checkbox } from "@mui/material";
 import Grid from '@mui/material/Grid2';
 import axios from "axios";
 import { styled } from '@mui/material/styles';
@@ -39,6 +39,7 @@ const CameraRecorder: React.FC = () => {
   const audioRef1 = useRef<HTMLAudioElement | null>(null);
   const audioRef2 = useRef<HTMLAudioElement | null>(null);
   const [isRecordingTraining, setIsRecordingTraining] = useState(false);
+  const [playShutterClickSound, setPlayShutterClickSound] = useState(true);
 
   useEffect(() => {
     if (isCameraOn) {
@@ -193,7 +194,8 @@ const CameraRecorder: React.FC = () => {
                 ? trainingSasToken
                 : inferenceSasToken
             )}
-        }
+          }
+          playShutterClickSound={playShutterClickSound}
           canvasRef={canvasRef}
         />
       </Box>
@@ -214,6 +216,10 @@ const CameraRecorder: React.FC = () => {
                     Switch Camera ({facingMode})
                 </Button>
                 
+                <span style={{marginLeft: '1em'}}>
+                  Play Shutter Click Sound
+                </span>
+                <Checkbox onChange={() => setPlayShutterClickSound(!playShutterClickSound)} checked={playShutterClickSound} />
                 <Button variant="contained" color="success" onClick={() => {
                   toast.info(`playSound`);
                   playSound()

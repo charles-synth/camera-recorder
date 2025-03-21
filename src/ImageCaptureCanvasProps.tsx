@@ -6,39 +6,53 @@ interface ImageCaptureCanvasProps {
     intervalSeconds: number;
     onCapture: () => void;
     canvasRef: React.RefObject<HTMLCanvasElement | null>; // ✅ allow null
+    playShutterClickSound: boolean;
 }
 
-const ImageCaptureCanvas: React.FC<ImageCaptureCanvasProps> = ({ intervalSeconds, onCapture, isRecording }) => {
+const ImageCaptureCanvas: React.FC<ImageCaptureCanvasProps> = ({ intervalSeconds, onCapture, isRecording, playShutterClickSound }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [countdown, setCountdown] = useState(intervalSeconds);
   const [flash, setFlash] = useState(false);
+  const beepRef = useRef<HTMLAudioElement | null>(null);
+    const [hasBeeped, setHasBeeped] = useState(false);
 
-  useEffect(() => {
-    if(!isRecording) return;
-
-    const interval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          triggerFlash();
-          onCapture();
-          return intervalSeconds;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [intervalSeconds, onCapture]);
+    useEffect(() => {
+        const interval = setInterval(() => {
+          setCountdown(prev => {
+            const next = prev - 1;
+      
+            if (next === 0) {
+              onCapture();
+              setHasBeeped(false); // Reset beep state for next cycle
+              return intervalSeconds;
+            }
+      
+            if (next === 1 && !hasBeeped) {
+                if(playShutterClickSound){
+                    if (!beepRef.current) {
+                        beepRef.current = new Audio("/sounds/shutter-click.wav");
+                    }
+                    beepRef.current.play().catch(err => console.error("Beep error", err));
+                }
+                setHasBeeped(true);
+            }
+      
+            return next;
+          });
+        }, 1000);
+      
+        return () => clearInterval(interval);
+      }, [intervalSeconds, onCapture, hasBeeped]);
 
   const triggerFlash = () => {
     setFlash(true);
     setTimeout(() => setFlash(false), 100); // Quick flash
   };
 
-  // Fade and zoom intensity
-  const visible = countdown <= 30;
-  const opacity = 1;//visible ? 1 - (countdown - 1) * 0.3 : 0;
-  const scale = 1; //visible ? 1 + (1 - countdown / 3) * 0.5 : 1; // Zoom in as countdown approaches 0
+    // Fade and zoom intensity
+    const maxCount = intervalSeconds;
+    const opacity = Math.max(0.2, 1 - countdown / maxCount); // min 0.2 → max 1
+    const scale = 1 + (1 - countdown / maxCount) * 0.5;       // 1 → 1.5 as it nears 0
 
   return (
     <Box position="absolute"
@@ -74,30 +88,30 @@ const ImageCaptureCanvas: React.FC<ImageCaptureCanvasProps> = ({ intervalSeconds
         position="absolute"
         top={0}
         left={0}
-        width="1100px"
-        height="900px"
+        width="100%"
+        height="100%"
         display="flex"
         justifyContent="center"
         alignItems="center"
+        zIndex={3}
         sx={{ pointerEvents: 'none' }}
-        zIndex={300}
-      >
+        >
         <Typography
-          variant="h3"
-          component="div"
-          color="white"
-          sx={{
+            variant="h3"
+            component="div"
+            color="white"
+            sx={{
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             borderRadius: 2,
             padding: '0.5rem 1.5rem',
             opacity,
             transform: `scale(${scale})`,
             transition: 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out',
-          }}
+            }}
         >
-          {countdown}
+            {countdown}
         </Typography>
-      </Box>
+        </Box>
 
       {/* Flash animation keyframes */}
       <style>{`
