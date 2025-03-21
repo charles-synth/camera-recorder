@@ -221,13 +221,11 @@ const CameraRecorder: React.FC = () => {
                 </span>
                 <Checkbox onChange={() => setPlayShutterClickSound(!playShutterClickSound)} checked={playShutterClickSound} />
                 <Button variant="contained" color="success" onClick={() => {
-                  toast.info(`playSound`);
                   playSound()
                 }} sx={{ml: '1em'}}>
                   Play Sound 1
                 </Button>
                 <Button variant="contained" color="success" onClick={() => {
-                  toast.info(`playSound2`);
                   playSound2()
                 }} sx={{ml: '1em'}}>
                   Play Sound 2

@@ -17,6 +17,8 @@ const ImageCaptureCanvas: React.FC<ImageCaptureCanvasProps> = ({ intervalSeconds
     const [hasBeeped, setHasBeeped] = useState(false);
 
     useEffect(() => {
+        if(!isRecording) return;
+        
         const interval = setInterval(() => {
           setCountdown(prev => {
             const next = prev - 1;
@@ -42,7 +44,13 @@ const ImageCaptureCanvas: React.FC<ImageCaptureCanvasProps> = ({ intervalSeconds
         }, 1000);
       
         return () => clearInterval(interval);
-      }, [intervalSeconds, onCapture, hasBeeped]);
+      }, [onCapture, hasBeeped]);
+
+      
+    useEffect(() => {
+        setCountdown(intervalSeconds);
+        }, [intervalSeconds]
+    )
 
   const triggerFlash = () => {
     setFlash(true);
