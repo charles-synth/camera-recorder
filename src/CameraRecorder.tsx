@@ -48,10 +48,16 @@ const CameraRecorder: React.FC = () => {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: `${facingMode}` } } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
+
+      navigator.mediaDevices.enumerateDevices().then(devices => {
+        devices.forEach(device => {
+          console.log(`${device.kind}: ${device.label} id=${device.deviceId}`);
+        });
+      });
     } catch (error) {
       console.error("Error accessing camera:", error);
     }
@@ -66,11 +72,12 @@ const CameraRecorder: React.FC = () => {
   };
 
   const captureAndUploadImage = async (accountUrl: string, containerName: string, sasToken: string) => {
-    toast.info(`captureAndUploadImage`);
-    if (!canvasRef.current || !videoRef.current || !trainingStorageAccountUrl) return;
+    toast.info(`Next image capture in ${intervalTime / 1000} seconds`, { autoClose: intervalTime });
+    if (!canvasRef.current || !videoRef.current) return;
 
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
+
     if (context) {
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
@@ -78,46 +85,52 @@ const CameraRecorder: React.FC = () => {
 
       toast.info(`Next image capture in ${intervalTime / 1000} seconds`, { autoClose: intervalTime });
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        const fileName = `snapshot_${Date.now()}.png`;
-        const file = new File([blob], fileName, { type: "image/png" });
-        const formData = new FormData();
-        formData.append("file", file);
+      const fileName = `snapshot_${Date.now()}.png`;
 
-        const uploadUrl = `${accountUrl}${containerName}/${fileName}${sasToken}`;
+      const isCloudUpload = (accountUrl.trim().length > 0 && containerName.trim().length > 0 && sasToken.trim().length > 0);
 
-        try {
-          await axios.put(uploadUrl.replace('{filename}', fileName), blob, {
-            headers: {
-                "x-ms-blob-type": "BlockBlob",
-                "x-ms-version": "2021-08-06",           // Explicit Azure API version
-                "Content-Type": "image/png",
-                "x-ms-date": new Date().toUTCString(), // Ensures timestamp is included
-            },
-          });
-          console.log("Image uploaded successfully");
-        } catch (error) {
-          console.error("Error uploading image:", error);
-        }
-      }, "image/png");
+      if(!isCloudUpload){
+        // download to downloads folder
+        // Create image and trigger download
+        const image = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = image;
+        link.download = fileName;
+        link.click();
+      }
+      else{
+        // upload to azure storage
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          const file = new File([blob], fileName, { type: "image/png" });
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const uploadUrl = `${accountUrl}${containerName}/${fileName}${sasToken}`;
+
+          try {
+            await axios.put(uploadUrl.replace('{filename}', fileName), blob, {
+              headers: {
+                  "x-ms-blob-type": "BlockBlob",
+                  "x-ms-version": "2021-08-06",           // Explicit Azure API version
+                  "Content-Type": "image/png",
+                  "x-ms-date": new Date().toUTCString(), // Ensures timestamp is included
+              },
+            });
+            console.log("Image uploaded successfully");
+          } catch (error) {
+            console.error("Error uploading image:", error);
+          }
+        }, "image/png"); }
     }
   };
 
   const startRecordingTrainingImages = () => {
-    if (!trainingStorageAccountUrl || !trainingContainerName || !trainingSasToken) {
-      alert("Please enter valid Training Azure Container Credentials");
-      return;
-    }
     setIsRecording(true);
     intervalRef.current = setInterval(() => captureAndUploadImage(trainingStorageAccountUrl, trainingContainerName, trainingSasToken), intervalTime);
   };
 
   const startRecordingInferenceImages = () => {
-    if (!inferenceStorageAccountUrl || !inferenceContainerName || !inferenceSasToken) {
-      alert("Please enter valid Inference Azure Container Credentials");
-      return;
-    }
     setIsRecording(true);
     intervalRef.current = setInterval(() => captureAndUploadImage(inferenceStorageAccountUrl, inferenceContainerName, inferenceSasToken), intervalTime);
   };
@@ -188,10 +201,10 @@ const CameraRecorder: React.FC = () => {
                 </Button>
             </Grid>
             <Grid size={6}>
-                <Item>Training Images</Item>
+                <Item>Training Images (Leave blank for Downloads folder)</Item>
             </Grid>
             <Grid size={6}>
-                <Item>Inference Images</Item>
+                <Item>Inference Images (Leave blank for Downloads folder)</Item>
             </Grid>
             <Grid size={6}>
                 <Item>
