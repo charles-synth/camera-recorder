@@ -72,7 +72,6 @@ const CameraRecorder: React.FC = () => {
   };
 
   const captureAndUploadImage = async (accountUrl: string, containerName: string, sasToken: string) => {
-    toast.info(`Next image capture in ${intervalTime / 1000} seconds`, { autoClose: intervalTime });
     if (!canvasRef.current || !videoRef.current) return;
 
     const canvas = canvasRef.current;
