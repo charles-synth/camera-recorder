@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ImageCaptureCanvas from "./ImageCaptureCanvasProps";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: '#fff',
@@ -21,7 +22,7 @@ const Item = styled(Paper)(({ theme }) => ({
 
 const CameraRecorder: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [intervalTime, setIntervalTime] = useState(5000);
   const [trainingStorageAccountUrl, setTraningStorageAccountUrl] = useState("");
@@ -37,6 +38,7 @@ const CameraRecorder: React.FC = () => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef1 = useRef<HTMLAudioElement | null>(null);
   const audioRef2 = useRef<HTMLAudioElement | null>(null);
+  const [isRecordingTraining, setIsRecordingTraining] = useState(false);
 
   useEffect(() => {
     if (isCameraOn) {
@@ -88,48 +90,54 @@ const CameraRecorder: React.FC = () => {
 
       const isCloudUpload = (accountUrl.trim().length > 0 && containerName.trim().length > 0 && sasToken.trim().length > 0);
 
-      if(!isCloudUpload){
-        // download to downloads folder
-        // Create image and trigger download
-        const image = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = image;
-        link.download = fileName;
-        link.click();
+      const disableImageSaving = true;
+
+      if(!disableImageSaving){
+        if(!isCloudUpload){
+          // download to downloads folder
+          // Create image and trigger download
+          const image = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.href = image;
+          link.download = fileName;
+          link.click();
+        }
+        else{
+          // upload to azure storage
+          canvas.toBlob(async (blob) => {
+            if (!blob) return;
+            const file = new File([blob], fileName, { type: "image/png" });
+            const formData = new FormData();
+            formData.append("file", file);
+  
+            const uploadUrl = `${accountUrl}${containerName}/${fileName}${sasToken}`;
+  
+            try {
+              await axios.put(uploadUrl.replace('{filename}', fileName), blob, {
+                headers: {
+                    "x-ms-blob-type": "BlockBlob",
+                    "x-ms-version": "2021-08-06",           // Explicit Azure API version
+                    "Content-Type": "image/png",
+                    "x-ms-date": new Date().toUTCString(), // Ensures timestamp is included
+                },
+              });
+              console.log("Image uploaded successfully");
+            } catch (error) {
+              console.error("Error uploading image:", error);
+            }
+          }, "image/png"); }
+        }
       }
-      else{
-        // upload to azure storage
-        canvas.toBlob(async (blob) => {
-          if (!blob) return;
-          const file = new File([blob], fileName, { type: "image/png" });
-          const formData = new FormData();
-          formData.append("file", file);
-
-          const uploadUrl = `${accountUrl}${containerName}/${fileName}${sasToken}`;
-
-          try {
-            await axios.put(uploadUrl.replace('{filename}', fileName), blob, {
-              headers: {
-                  "x-ms-blob-type": "BlockBlob",
-                  "x-ms-version": "2021-08-06",           // Explicit Azure API version
-                  "Content-Type": "image/png",
-                  "x-ms-date": new Date().toUTCString(), // Ensures timestamp is included
-              },
-            });
-            console.log("Image uploaded successfully");
-          } catch (error) {
-            console.error("Error uploading image:", error);
-          }
-        }, "image/png"); }
-    }
   };
 
   const startRecordingTrainingImages = () => {
+    setIsRecordingTraining(true);
     setIsRecording(true);
     intervalRef.current = setInterval(() => captureAndUploadImage(trainingStorageAccountUrl, trainingContainerName, trainingSasToken), intervalTime);
   };
 
   const startRecordingInferenceImages = () => {
+    setIsRecordingTraining(true);
     setIsRecording(true);
     intervalRef.current = setInterval(() => captureAndUploadImage(inferenceStorageAccountUrl, inferenceContainerName, inferenceSasToken), intervalTime);
   };
@@ -167,8 +175,28 @@ const CameraRecorder: React.FC = () => {
   return (
     <Container>
       <h2>Camera Recorder</h2>
-      <video ref={videoRef} autoPlay playsInline style={{ width: "100%" }} />
-      <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
+      <Box sx={{position: 'relative', backgroundColor: 'transparent'}}>
+        <video ref={videoRef} autoPlay playsInline width={1100} height={900} style={{ width: 1100, height: 900, zIndex: 1 }} />
+        <ImageCaptureCanvas
+          isRecording={isRecording}
+          intervalSeconds={intervalTime / 1000}
+          onCapture={() => {
+            
+            captureAndUploadImage(
+              isRecordingTraining
+                ? trainingStorageAccountUrl
+                : inferenceStorageAccountUrl,
+              isRecordingTraining
+                ? trainingContainerName
+                : inferenceContainerName,
+              isRecordingTraining
+                ? trainingSasToken
+                : inferenceSasToken
+            )}
+        }
+          canvasRef={canvasRef}
+        />
+      </Box>
       <FormControl fullWidth margin="normal">
         <InputLabel>Interval</InputLabel>
         <Select value={intervalTime} onChange={(e) => setIntervalTime(Number(e.target.value))}>
