@@ -91,7 +91,7 @@ const CameraRecorder: React.FC = () => {
 
       const isCloudUpload = (accountUrl.trim().length > 0 && containerName.trim().length > 0 && sasToken.trim().length > 0);
 
-      const disableImageSaving = true;
+      const disableImageSaving = false;  // <-- set to true for debugging.
 
       if(!disableImageSaving){
         if(!isCloudUpload){
