@@ -202,8 +202,10 @@ const CameraRecorder: React.FC = () => {
       <FormControl fullWidth margin="normal">
         <InputLabel>Interval</InputLabel>
         <Select value={intervalTime} onChange={(e) => setIntervalTime(Number(e.target.value))}>
+          <MenuItem value={1000}>1 second</MenuItem>
           <MenuItem value={5000}>5 seconds</MenuItem>
           <MenuItem value={30000}>30 seconds</MenuItem>
+          <MenuItem value={60000}>60 seconds</MenuItem>
         </Select>
       </FormControl>
 
