@@ -1,11 +1,10 @@
 
 # Camera-Recorder
 
-The purpose of this app is to capture imagery on a 5 second or 30 second basis, and transfer into your RAIC Foundry DataSource, to quickly aggregate images for RAIC Vision training or RAIC Vision inference running needs. 
+The purpose of the Camera-Recorder app is to capture an image on an interval, such as every 5 or 30 seconds and download the image to your downloads folder, or alternatively, 
+upload the image to an Azure Storage Container location. The objective being to quickly aggregate images of a target or subject area.
 
 ![screenshot](./public/images/camera-recorder.png)
-
-
 
 
 # Getting Started with Create React App
