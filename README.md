@@ -1,5 +1,14 @@
-# Getting Started with Create React App
 
+# Camera-Recorder
+
+The purpose of this app is to capture imagery on a 5 second or 30 second basis, and transfer into your RAIC Foundry DataSource, to quickly aggregate images for RAIC Vision training or RAIC Vision inference running needs. 
+
+![screenshot](./public/images/camera-recorder.png)
+
+
+
+
+# Getting Started with Create React App
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
