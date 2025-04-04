@@ -9,8 +9,7 @@ interface ImageCaptureCanvasProps {
     playShutterClickSound: boolean;
 }
 
-const ImageCaptureCanvas: React.FC<ImageCaptureCanvasProps> = ({ intervalSeconds, onCapture, isRecording, playShutterClickSound }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+const ImageCaptureCanvas: React.FC<ImageCaptureCanvasProps> = ({ intervalSeconds, onCapture, isRecording, playShutterClickSound, canvasRef }) => {
   const [countdown, setCountdown] = useState(intervalSeconds);
   const [flash, setFlash] = useState(false);
   const beepRef = useRef<HTMLAudioElement | null>(null);

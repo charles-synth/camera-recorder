@@ -57,9 +57,9 @@ const CameraRecorder: React.FC = () => {
       }
 
       navigator.mediaDevices.enumerateDevices().then(devices => {
-        devices.forEach(device => {
-          console.log(`${device.kind}: ${device.label} id=${device.deviceId}`);
-        });
+        // devices.forEach(device => {
+        //   console.log(`${device.kind}: ${device.label} id=${device.deviceId}`);
+        // });
       });
     } catch (error) {
       console.error("Error accessing camera:", error);
@@ -75,10 +75,21 @@ const CameraRecorder: React.FC = () => {
   };
 
   const captureAndUploadImage = async (accountUrl: string, containerName: string, sasToken: string) => {
+    console.log(`Gah`);
+
+    if (!canvasRef.current)
+      console.log('canvasRef undefined') 
+    if (!videoRef.current) 
+      console.log('videoRef undefined') 
+
     if (!canvasRef.current || !videoRef.current) return;
 
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
+
+    if(!context){
+      console.log(`why no context?`);
+    }
 
     if (context) {
       canvas.width = videoRef.current.videoWidth;
@@ -93,6 +104,8 @@ const CameraRecorder: React.FC = () => {
 
       const disableImageSaving = false;  // <-- set to true for debugging.
 
+      console.log(`isCloudUpload: ${isCloudUpload.toString()}`);
+
       if(!disableImageSaving){
         if(!isCloudUpload){
           // download to downloads folder
@@ -102,6 +115,7 @@ const CameraRecorder: React.FC = () => {
           link.href = image;
           link.download = fileName;
           link.click();
+          console.log(`download ${fileName}`);
         }
         else{
           // upload to azure storage
